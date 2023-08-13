@@ -1,20 +1,14 @@
-import copy
-from datetime import datetime, date, timedelta
-import pytz
-import json
+import schedule
+import time
 
-import urllib
-from pymongo import MongoClient
 
-if __name__ == "__main__":
-    db_metatelebot = MongoClient("mongodb+srv://longhieu4820001:YI6YkQGnM3AGJgUH@cluster0.k0zyxgr.mongodb.net/?retryWrites=true&w=majority").get_database("metatelebot")
-    col_trade_mode = db_metatelebot["trade_mode"]   
+from get_notification import get_notification
+from trade_mode import delete_expired_trade_mode
+from get_signal import get_new_signals
 
-    current_time = datetime.now(tz=pytz.UTC) 
-    print("check_and_reset_modes", current_time)
+schedule.every(5).to(8).seconds.do(get_new_signals)
+schedule.every(10).minutes.do(delete_expired_trade_mode)
 
-    list_item = list(col_trade_mode.find().limit(1000))
-    for item in list_item:
-        if item["expired_time"].replace(tzinfo=pytz.UTC) <= current_time:
-            col_trade_mode.delete_one({"_id": item["_id"]})
-    
+while True:
+    schedule.run_pending()
+    time.sleep(1)
